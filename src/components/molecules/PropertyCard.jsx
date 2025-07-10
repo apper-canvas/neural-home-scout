@@ -1,17 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "@/utils/cn";
 import { format } from "date-fns";
+import { cn } from "@/utils/cn";
 import ApperIcon from "@/components/ApperIcon";
 import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-
-const PropertyCard = ({ 
-  property, 
-  isFavorite, 
-  onToggleFavorite, 
-  className 
-}) => {
+const PropertyCard = ({ property, isFavorite, onToggleFavorite, viewMode = "grid", className }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -35,11 +31,26 @@ const PropertyCard = ({
     <div className={cn("property-card group", className)}>
       <Link to={`/property/${property.Id}`}>
         <div className="bg-white rounded-xl shadow-card overflow-hidden hover:shadow-hover transition-all duration-200">
-          <div className="relative">
+<div className="relative">
+            {imageLoading && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-t-xl flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
             <img
-              src={property.images[0]}
-              alt={property.title}
-              className="property-image w-full h-48 object-cover transition-all duration-200"
+              src={imageError ? 'https://via.placeholder.com/800x600/e5e7eb/9ca3af?text=Property+Image' : property.images?.[0] || 'https://via.placeholder.com/800x600/e5e7eb/9ca3af?text=No+Image'}
+              alt={`${property.title} - ${property.type} in ${property.address?.city || 'Unknown location'}`}
+              className={cn(
+                "property-image w-full h-48 object-cover transition-all duration-200",
+                imageLoading && "opacity-0",
+                imageError && "opacity-75"
+              )}
+              loading="lazy"
+              onLoad={() => setImageLoading(false)}
+              onError={() => {
+                setImageError(true);
+                setImageLoading(false);
+              }}
             />
             <div className="absolute top-3 left-3">
               <Badge variant="default" className="property-type-badge">

@@ -1,28 +1,38 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { propertyService } from "@/services/api/propertyService";
+import { cn } from "@/utils/cn";
 import ApperIcon from "@/components/ApperIcon";
-import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
-import Loading from "@/components/ui/Loading";
+import Button from "@/components/atoms/Button";
 import Error from "@/components/ui/Error";
-
+import Loading from "@/components/ui/Loading";
+import { propertyService } from "@/services/api/propertyService";
 const PropertyDetail = () => {
   const { id } = useParams();
   const [property, setProperty] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [savedProperties, setSavedProperties] = useLocalStorage("savedProperties", []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mainImageLoading, setMainImageLoading] = useState(true);
+  const [mainImageError, setMainImageError] = useState(false);
+  const [thumbnailStates, setThumbnailStates] = useState({});
+const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [savedProperties, setSavedProperties] = useLocalStorage('savedProperties', []);
 
-  const loadProperty = async () => {
-    setLoading(true);
-    setError("");
-    
+  const updateThumbnailState = (index, state) => {
+    setThumbnailStates(prev => ({
+      ...prev,
+      [index]: { ...prev[index], ...state }
+    }));
+  };
+
+const loadProperty = async () => {
     try {
+      setError(null);
+      setLoading(true);
+      
       const data = await propertyService.getById(parseInt(id));
       setProperty(data);
     } catch (err) {
@@ -63,18 +73,22 @@ const PropertyDetail = () => {
   };
 
   const nextImage = () => {
-    if (property && property.images.length > 0) {
+    if (property?.images?.length > 0) {
       setCurrentImageIndex((prev) => 
         prev === property.images.length - 1 ? 0 : prev + 1
       );
+      setMainImageLoading(true);
+      setMainImageError(false);
     }
   };
 
   const prevImage = () => {
-    if (property && property.images.length > 0) {
+    if (property?.images?.length > 0) {
       setCurrentImageIndex((prev) => 
         prev === 0 ? property.images.length - 1 : prev - 1
       );
+      setMainImageLoading(true);
+      setMainImageError(false);
     }
   };
 
@@ -92,16 +106,12 @@ const PropertyDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="h-8 bg-gray-200 rounded shimmer"></div>
-              <div className="h-12 bg-gray-200 rounded w-48 shimmer"></div>
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded shimmer"></div>
-                ))}
-              </div>
+              <div className="h-6 bg-gray-200 rounded shimmer"></div>
+              <div className="h-32 bg-gray-200 rounded shimmer"></div>
             </div>
             <div className="space-y-6">
-              <div className="h-32 bg-gray-200 rounded shimmer"></div>
-              <div className="h-48 bg-gray-200 rounded shimmer"></div>
+              <div className="h-40 bg-gray-200 rounded shimmer"></div>
+              <div className="h-40 bg-gray-200 rounded shimmer"></div>
             </div>
           </div>
         </div>
@@ -140,15 +150,35 @@ const PropertyDetail = () => {
 
       {/* Image Gallery */}
       <div className="relative mb-8">
-        <div className="aspect-w-16 aspect-h-9 bg-gray-200 rounded-xl overflow-hidden">
-          <img
-            src={property.images[currentImageIndex]}
-            alt={`${property.title} - Image ${currentImageIndex + 1}`}
-            className="w-full h-96 object-cover"
-          />
+<div className="aspect-w-16 aspect-h-9 bg-gray-200 rounded-xl overflow-hidden">
+          <div className="relative">
+            {mainImageLoading && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            <img
+              src={mainImageError ? 'https://via.placeholder.com/800x600/e5e7eb/9ca3af?text=Property+Image' : property.images?.[currentImageIndex] || 'https://via.placeholder.com/800x600/e5e7eb/9ca3af?text=No+Image'}
+              alt={`${property.title} - Image ${currentImageIndex + 1} of ${property.images?.length || 0}`}
+              className={cn(
+                "w-full h-96 object-cover transition-all duration-200",
+                mainImageLoading && "opacity-0",
+                mainImageError && "opacity-75"
+              )}
+              onLoad={() => setMainImageLoading(false)}
+              onError={() => {
+                setMainImageError(true);
+                setMainImageLoading(false);
+              }}
+              onLoadStart={() => {
+                setMainImageLoading(true);
+                setMainImageError(false);
+              }}
+            />
+          </div>
         </div>
         
-        {property.images.length > 1 && (
+{property?.images?.length > 1 && (
           <>
             <button
               onClick={prevImage}
@@ -166,9 +196,9 @@ const PropertyDetail = () => {
         )}
         
         {/* Image indicators */}
-        {property.images.length > 1 && (
+{property?.images?.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {property.images.map((_, index) => (
+{property?.images?.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -184,9 +214,9 @@ const PropertyDetail = () => {
       </div>
 
       {/* Thumbnail Gallery */}
-      {property.images.length > 1 && (
+{property?.images?.length > 1 && (
         <div className="flex space-x-2 mb-8 overflow-x-auto">
-          {property.images.map((image, index) => (
+{property?.images?.map((image, index) => (
             <button
               key={index}
               onClick={() => setCurrentImageIndex(index)}
@@ -196,11 +226,26 @@ const PropertyDetail = () => {
                   : "border-transparent hover:border-gray-300"
               }`}
             >
-              <img
-                src={image}
-                alt={`${property.title} - Thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
+<div className="relative">
+                {thumbnailStates[index]?.loading && (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                    <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                <img
+                  src={thumbnailStates[index]?.error ? 'https://via.placeholder.com/150x150/e5e7eb/9ca3af?text=Thumb' : image || 'https://via.placeholder.com/150x150/e5e7eb/9ca3af?text=No+Image'}
+                  alt={`${property.title} - Thumbnail ${index + 1} of ${property.images?.length || 0}`}
+                  className={cn(
+                    "w-full h-full object-cover transition-all duration-200",
+                    thumbnailStates[index]?.loading && "opacity-0",
+                    thumbnailStates[index]?.error && "opacity-75"
+                  )}
+                  loading="lazy"
+                  onLoad={() => updateThumbnailState(index, { loading: false })}
+                  onError={() => updateThumbnailState(index, { error: true, loading: false })}
+                  onLoadStart={() => updateThumbnailState(index, { loading: true, error: false })}
+                />
+              </div>
             </button>
           ))}
         </div>
