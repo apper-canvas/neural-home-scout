@@ -33,13 +33,12 @@ const Header = ({
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary-600 rounded-lg flex items-center justify-center">
-              <ApperIcon name="Home" className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-display font-bold text-xl text-gray-900">
-              HomeScout
-            </span>
-          </Link>
-
+<ApperIcon name="Home" className="w-5 h-5 text-white" />
+          </div>
+          <span className="font-display font-bold text-xl text-gray-900">
+            Scout Pro
+          </span>
+        </Link>
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navigation.map((item) => (
