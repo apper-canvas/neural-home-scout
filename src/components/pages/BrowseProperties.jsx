@@ -234,7 +234,7 @@ const BrowseProperties = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-display font-bold text-gray-900">
-                Properties for Sale...
+                Properties for Sale....
               </h1>
               <div className="text-sm text-gray-600">
                 {filteredProperties.length} properties found
