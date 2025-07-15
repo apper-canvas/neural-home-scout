@@ -36,7 +36,7 @@ const Header = ({
 <ApperIcon name="Home" className="w-5 h-5 text-white" />
           </div>
           <span className="font-display font-bold text-xl text-gray-900">
-            Scout Ultra
+            Scout Ultra Pro
           </span>
         </Link>
           {/* Desktop Navigation */}
